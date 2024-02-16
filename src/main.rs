@@ -59,14 +59,14 @@ fn main() -> Result<(), DynError> {
         subscriber, 
         Box::new(move |msg| {
         
-            let (left_order, right_order) = move_chassis(-msg.linear.y, msg.linear.x, msg.angular.z);
+            let (left_order, right_order) = move_chassis(-msg.linear.x, msg.linear.y, msg.angular.z);
             pr_info!(logger, "left_order:{}  {}  right_order:{}  {}", left_order.phase, left_order.speed, right_order.phase, right_order.speed);
             
-            send_speed(WheelAdress::Left as u8,0,  left_order.phase, left_order.speed, 0, &publisher);
-            send_speed(WheelAdress::Right as u8 , 0, right_order.phase, right_order.speed, 0, &publisher);
+            // send_speed(WheelAdress::Left as u8,0,  left_order.phase, left_order.speed, 0, &publisher);
+            // send_speed(WheelAdress::Right as u8 , 0, right_order.phase, right_order.speed, 0, &publisher);
 
-            // send_pwm(WheelAdress::LeftPower, left_order.phase, left_order.speed, &publisher);
-            // send_pwm(WheelAdress::RightPower, right_order.phase, right_order.speed, &publisher);
+            send_pwm(WheelAdress::Left as u8, 0,left_order.phase, left_order.speed, &publisher);
+            send_pwm(WheelAdress::Right as u8, 0, right_order.phase, right_order.speed, &publisher);
 
             // move_wheel(WheelAdress::LeftPower, WheelAdress::LeftSteering, left_order, &mut left_now_angle, &publisher);
             // move_wheel(WheelAdress::RightPower, WheelAdress::RightSteering, right_order, &mut right_now_angle, &publisher);
@@ -85,7 +85,7 @@ fn move_chassis(_xrpm: f64, _yrpm: f64, _yaw: f64) -> (WheelOrder, WheelOrder) {
     // let rad: f64 = _yrpm.atan2(_xrpm);
     
     //回転成分　θ・R _yawの０基準を前方にしてロボットからの距離をかける
-    let rotation_component: f64 = _yaw as f64  * ROBOT_CENTER_TO_WHEEL_DISTANCE;
+    let rotation_component: f64 = _yaw  * 0.05 * ROBOT_CENTER_TO_WHEEL_DISTANCE;
 
     let left_speed: i32 = (_xrpm + rotation_component) as i32;
     let right_speed: i32 = (_xrpm - rotation_component) as i32;
@@ -122,12 +122,12 @@ fn move_chassis(_xrpm: f64, _yrpm: f64, _yaw: f64) -> (WheelOrder, WheelOrder) {
 
     let left_order = WheelOrder{
         phase : (left_speed < 0) as bool,
-        speed : abs(left_speed) as u16
+        speed : (abs(left_speed)  as f32 *3.0) as u16
     };
 
     let right_order = WheelOrder{
         phase : !(right_speed < 0) as bool,
-        speed : abs(right_speed) as u16
+        speed : (abs(right_speed) as f32 * 3.0) as u16
     };
 
     // let rear_left_order = WheelOrder{

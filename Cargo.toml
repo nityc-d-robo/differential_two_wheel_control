@@ -1,0 +1,16 @@
+[package]
+name = "differential_two_wheel_control"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+num-traits = "0.2.17"
+safe_drive = "0.2"
+drobo_interfaces = { path = "/tmp/2023_off_team_b_controller/drobo_interfaces" }
+
+[package.metadata.ros]
+msg = ["drobo_interfaces"]
+msg_dir = "/tmp/2023_off_team_b_controller/"
+safe_drive_version = "0.2"

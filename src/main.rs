@@ -85,8 +85,11 @@ fn move_chassis(_xrpm: f64, _yrpm: f64, _yaw: f64) -> (WheelOrder, WheelOrder) {
     // let rad: f64 = _yrpm.atan2(_xrpm);
     
     //回転成分　θ・R _yawの０基準を前方にしてロボットからの距離をかける
-    let rotation_component: f64 = _yaw * 0.04 * ROBOT_CENTER_TO_WHEEL_DISTANCE;
+    let mut rotation_component: f64 = _yaw * 0.04 * ROBOT_CENTER_TO_WHEEL_DISTANCE;
 
+    if (_xrpm < 10.0) {
+        rotation_component *= 1.5;
+    }
     let left_speed: i32 = (_xrpm + rotation_component) as i32;
     let right_speed: i32 = (_xrpm - rotation_component) as i32;
 

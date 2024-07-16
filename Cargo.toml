@@ -7,10 +7,3 @@ edition = "2021"
 
 [dependencies]
 num-traits = "0.2.17"
-safe_drive = "0.2"
-drobo_interfaces = { path = "/tmp/2023_off_team_b_controller/drobo_interfaces" }
-
-[package.metadata.ros]
-msg = ["drobo_interfaces"]
-msg_dir = "/tmp/2023_off_team_b_controller/"
-safe_drive_version = "0.2"

@@ -1,4 +1,4 @@
-use drobo_interfaces::msg::MdLibMsg;
+use drobo_interfaces::msg::BlMdLibMsg;
 use num_traits::abs;
 use safe_drive::topic::publisher;
 use safe_drive::{
@@ -14,11 +14,11 @@ const  ROBOT_CENTER_TO_WHEEL_DISTANCE: f64 = 0.37;  //ロボットの中心か�
 const  STEERING_GEAR_RATIO :u16  = 3;
 
 enum WheelAdress {
-    Left    = 0,
+    Left    = 1,
     Right   = 2
 }
 enum Mode{
-    PWM = 2,
+    CURRENT = 2,
     SPEED = 3,
     ANGLE = 4
 }
@@ -43,7 +43,7 @@ fn main() -> Result<(), DynError> {
     let subscriber = node.create_subscriber::<msg::Twist>("cmd_vel", None)?;
 
     // Create a publisher.
-    let publisher = node.create_publisher::<drobo_interfaces::msg::MdLibMsg>("md_driver_topic", None)?;
+    let publisher = node.create_publisher::<drobo_interfaces::msg::BlMdLibMsg>("blmd_driver_topic", None)?;
 
     // Create a logger.
     let logger = Logger::new("differential_two_wheel_control");
@@ -186,14 +186,13 @@ fn move_chassis(_xrpm: f64, _yrpm: f64, _yaw: f64) -> (WheelOrder, WheelOrder) {
 //     return target_bool
 // }
 
-fn send_pwm(_adress: u8, _semi_id: u8, _phase: bool, _power: u16, _publisher:  &Publisher<drobo_interfaces::msg::MdLibMsg>){
+fn send_pwm(_adress: u8, _semi_id: u8, _phase: bool, _power: u16, _publisher:  &Publisher<drobo_interfaces::msg::BlMdLibMsg>){
     //dmotor_rosでsendPwmをするようにパブリッシュ
-    let mut msg =  drobo_interfaces::msg::MdLibMsg::new().unwrap();
-    msg.address = _adress as u8;
-    msg.semi_id = _semi_id as u8;
-    msg.mode = Mode::PWM as u8;
-    msg.phase = _phase as bool;
-    msg.power = _power as u16;
+    let mut msg =  drobo_interfaces::msg::BlMdLibMsg::new().unwrap();
+    msg.controller_id = _adress;
+    msg.mode = Mode::CURRENT as u8;
+    msg.current = if _phase {_power as i16} else {-1 *_power as i16};
+    msg.current = if msg.controller_id == 1 {msg.current} else {-1 * msg.current};
 
     let logger = Logger::new("differential_two_wheel_control");
     pr_info!(logger, "{:?}", msg);

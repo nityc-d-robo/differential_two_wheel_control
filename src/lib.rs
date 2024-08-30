@@ -20,8 +20,8 @@ impl DtwcSetting {
         if _xrpm < 10.0 {
             rotation_component *= 1.5;
         }
-        let left_speed: f64 = _xrpm + rotation_component;
-        let right_speed: f64 = _xrpm - rotation_component;
+        let left_speed: f64 = _yrpm - rotation_component;
+        let right_speed: f64 = _yrpm + rotation_component;
 
         let mut re_motor_powar = HashMap::new();
         re_motor_powar.insert(self.l_id, left_speed * 3.5);

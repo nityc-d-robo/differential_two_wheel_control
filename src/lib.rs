@@ -24,8 +24,8 @@ impl DtwcSetting {
         let right_speed: f64 = _yrpm + rotation_component;
 
         let mut re_motor_powar = HashMap::new();
-        re_motor_powar.insert(self.l_id, left_speed * 3.5);
-        re_motor_powar.insert(self.r_id, right_speed * 3.5);
+        re_motor_powar.insert(self.l_id, -1. *left_speed * 3.5);
+        re_motor_powar.insert(self.r_id,  right_speed * 3.5);
 
         re_motor_powar
     }

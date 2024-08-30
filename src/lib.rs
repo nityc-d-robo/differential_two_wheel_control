@@ -11,7 +11,6 @@ pub struct Chassis {
 }
 pub struct DtwcSetting {
     pub chassis: Chassis,
-    pub robot_center_to_wheel_distance: f64,
     pub max_pawer_input: f64,
     pub max_pawer_output: f64,
     pub max_revolution: f64,
@@ -24,9 +23,10 @@ impl DtwcSetting {
             .min(self.max_pawer_input);
         
         // 感
-        let revolution = (angular_z/self.max_revolution)*self.robot_center_to_wheel_distance;
-        let mut left_speed = self.chassis.r.raito * (power + revolution);
-        let mut right_speed = self.chassis.l.raito * (power - revolution);
+        let revolution_s = angular_z/self.max_revolution;
+        let power_s = power/self.max_pawer_input;
+        let mut left_speed = self.chassis.r.raito * (power_s+revolution_s) *  self.max_pawer_output;
+        let mut right_speed = self.chassis.l.raito * (power_s-revolution_s)  *  self.max_pawer_output;
 
 
         // モーターの回転方向が逆だから

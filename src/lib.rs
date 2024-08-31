@@ -16,18 +16,31 @@ pub struct DtwcSetting {
     pub max_revolution: f64,
 }
 
+const X_AXIS: f64 = 0.;
+
 impl DtwcSetting {
-    pub fn move_chassis(&self,linear_x: f64,linear_y: f64,angular_z: f64,) -> HashMap<usize, f64> {
+    pub fn move_chassis(
+        &self,
+        linear_x: f64,
+        linear_y: f64,
+        angular_z: f64,
+    ) -> HashMap<usize, f64> {
         let power: f64 = (linear_x.powf(2.) + linear_y.powf(2.))
             .sqrt()
             .min(self.max_pawer_input);
-        
-        // 感
-        let revolution_s = angular_z/self.max_revolution;
-        let power_s = power/self.max_pawer_input;
-        let mut left_speed = self.chassis.r.raito * (power_s+revolution_s) *  self.max_pawer_output;
-        let mut right_speed = self.chassis.l.raito * (power_s-revolution_s)  *  self.max_pawer_output;
 
+        // 感
+        let revolution_s = angular_z / self.max_revolution;
+        let power_s = power / self.max_pawer_input;
+        let mut left_speed =
+            self.chassis.r.raito * (power_s - revolution_s) * self.max_pawer_output;
+        let mut right_speed =
+            self.chassis.l.raito * (power_s + revolution_s) * self.max_pawer_output;
+
+        if linear_y < X_AXIS {
+            left_speed *= -1.;
+            right_speed *= -1.;
+        }
 
         // モーターの回転方向が逆だから
         left_speed *= -1.;
@@ -39,9 +52,8 @@ impl DtwcSetting {
         right_speed = right_speed.max(-self.max_pawer_output);
         right_speed = right_speed.min(self.max_pawer_output);
 
-
         let mut re_motor_powar = HashMap::new();
-        re_motor_powar.insert(self.chassis.l.id,left_speed);
+        re_motor_powar.insert(self.chassis.l.id, left_speed);
         re_motor_powar.insert(self.chassis.r.id, right_speed);
 
         re_motor_powar

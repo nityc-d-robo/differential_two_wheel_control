@@ -31,16 +31,14 @@ impl DtwcSetting {
 
         // 感
         let revolution_s = angular_z / self.max_revolution;
-        let power_s = power / self.max_pawer_input;
+
+        let power_s = (power / self.max_pawer_input) * if linear_y < X_AXIS { -1. } else { 1. };
+
         let mut left_speed =
             self.chassis.r.raito * (power_s - revolution_s) * self.max_pawer_output;
+
         let mut right_speed =
             self.chassis.l.raito * (power_s + revolution_s) * self.max_pawer_output;
-
-        if linear_y < X_AXIS {
-            left_speed *= -1.;
-            right_speed *= -1.;
-        }
 
         // モーターの回転方向が逆だから
         left_speed *= -1.;

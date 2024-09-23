@@ -8,9 +8,9 @@ edition = "2021"
 [dependencies]
 num-traits = "0.2.17"
 safe_drive = "0.4"
-drobo_interfaces = { path = "/tmp/2024_robot1_workspace/drobo_interfaces" }
+drobo_interfaces = { path = "/tmp/differential_two_wheel_control/drobo_interfaces" }
 
 [package.metadata.ros]
 msg = ["drobo_interfaces"]
-msg_dir = "/tmp/2024_robot1_workspace/"
+msg_dir = "/tmp/differential_two_wheel_control/"
 safe_drive_version = "0.4"

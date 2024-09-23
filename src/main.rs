@@ -1,10 +1,10 @@
-use drobo_interfaces::msg::BlMdLibMsg;
 use num_traits::abs;
 use safe_drive::topic::publisher;
 use safe_drive::{
     context::Context, error::DynError, logger::Logger, pr_info, topic::publisher::Publisher
 };
 use safe_drive::msg::common_interfaces::geometry_msgs::msg;
+use drobo_interfaces::msg::DiffDrive;
 use core::f64::consts::PI;
 
 
@@ -43,12 +43,10 @@ fn main() -> Result<(), DynError> {
     let subscriber = node.create_subscriber::<msg::Twist>("cmd_vel", None)?;
 
     // Create a publisher.
-    let publisher = node.create_publisher::<drobo_interfaces::msg::BlMdLibMsg>("blmd_driver_topic", None)?;
+    let diff_publisher = node.create_publisher::<DiffDrive>("/diff", None)?;
 
     // Create a logger.
     let logger = Logger::new("differential_two_wheel_control");
-
-    let mut msg = drobo_interfaces::msg::MdLibMsg::new().unwrap();
 
     let mut selector = ctx.create_selector()?;
 
@@ -65,8 +63,7 @@ fn main() -> Result<(), DynError> {
             // send_speed(WheelAdress::Left as u8,0,  left_order.phase, left_order.speed, 0, &publisher);
             // send_speed(WheelAdress::Right as u8 , 0, right_order.phase, right_order.speed, 0, &publisher);
 
-            send_pwm(WheelAdress::Left as u8, 0,left_order.phase, left_order.speed, &publisher);
-            send_pwm(WheelAdress::Right as u8, 0, right_order.phase, right_order.speed, &publisher);
+            send_pwm(left_order.phase, left_order.speed, right_order.phase, right_order.speed,&diff_publisher);
 
             // move_wheel(WheelAdress::LeftPower, WheelAdress::LeftSteering, left_order, &mut left_now_angle, &publisher);
             // move_wheel(WheelAdress::RightPower, WheelAdress::RightSteering, right_order, &mut right_now_angle, &publisher);
@@ -93,36 +90,6 @@ fn move_chassis(_xrpm: f64, _yrpm: f64, _yaw: f64) -> (WheelOrder, WheelOrder) {
     let left_speed: i32 = (_xrpm + rotation_component) as i32;
     let right_speed: i32 = (_xrpm - rotation_component) as i32;
 
-    // //各ホイールのx,y成分を出す。並進成分と回転成分を合成
-    // let left_component = Component{
-    //     x : (_xrpm) as f64,
-    //     y : (_yrpm - rotation_component) as f64
-    // };
-    // let right_component = Component{
-    //     x : (_xrpm) as f64,
-    //     y : (_yrpm + rotation_component) as f64
-    // };
-    // let rear_left_component = Component{
-    //     x : (_xrpm + (2_f64).sqrt()/2.0 * rotation_component) as f64,
-    //     y : (_yrpm - (2_f64).sqrt()/2.0 * rotation_component) as f64
-    // };
-    // let rear_right_component = Component{
-    //     x : (_xrpm + (2_f64).sqrt()/2.0 * rotation_component) as f64,
-    //     y : (_yrpm + (2_f64).sqrt()/2.0 * rotation_component) as f64
-    // };
-
-    // //各ホイールの方向を出す
-    // let front_left_direction: f64   = front_left_component.y.atan2(front_left_component.x);
-    // let front_right_direction: f64  = front_right_component.y.atan2(front_right_component.x);
-    // let rear_left_direction: f64    = rear_left_component.y.atan2(rear_left_component.x);
-    // let rear_right_direction: f64   = rear_right_component.y.atan2(rear_right_component.x);
-
-
-    // let front_left_speed: i64   = ((front_left_component.x.powf(2.0) + front_left_component.y.powf(2.0)).sqrt() / WHEEL_DIA) as i64;
-    // let front_right_speed: i64  = ((front_right_component.x.powf(2.0) + front_right_component.y.powf(2.0)).sqrt() / WHEEL_DIA) as i64;
-    // let rear_left_speed: i64    = ((rear_left_component.x.powf(2.0) + rear_left_component.y.powf(2.0)).sqrt() / WHEEL_DIA) as i64;
-    // let rear_right_speed: i64   = ((rear_right_component.x.powf(2.0) + rear_right_component.y.powf(2.0)).sqrt() / WHEEL_DIA) as i64;
-
     let left_order = WheelOrder{
         phase : (left_speed < 0) as bool,
         speed : (abs(left_speed)  as f32 *3.5* 1.05) as u16
@@ -132,99 +99,16 @@ fn move_chassis(_xrpm: f64, _yrpm: f64, _yaw: f64) -> (WheelOrder, WheelOrder) {
         phase : (right_speed < 0) as bool,
         speed : (abs(right_speed) as f32 * 3.5* 1.0) as u16
     };
-
-    // let rear_left_order = WheelOrder{
-    //     direction : rear_left_component.y.atan2(rear_left_component.x) as f64,
-    //     speed : ((rear_left_component.x.powf(2.0) + rear_left_component.y.powf(2.0)).sqrt() / WHEEL_DIA) as u16
-    // };
-
-    // let rear_right_order = WheelOrder{
-    //     direction : rear_right_component.y.atan2(rear_right_component.x) as f64,
-    //     speed : ((rear_right_component.x.powf(2.0) + rear_right_component.y.powf(2.0)).sqrt() / WHEEL_DIA) as u16
-    // };
-
     (left_order, right_order)
 }
 
-
-// fn move_wheel(power_adress: WheelAdress, steering_adress : WheelAdress, wheel_order :WheelOrder, now_angle : &mut f64,publisher: &Publisher<drobo_interfaces::msg::MdLibMsg>){
-//     //いい感じに制御しよう
-//     let (power_phase, steering_speed, steering_angle) = calculate_steering(wheel_order.direction, now_angle);
-    
-//     send_pwm(power_adress as u8, 0, power_phase, wheel_order.speed, &publisher);
-
-//     send_angle(steering_adress as u8, 0, steering_speed, steering_angle, 1000, &publisher);
-// }
-
-
-// fn calculate_steering(goal_angle:f64, now_angle : &mut f64) -> (bool, u16, i32) {
-//     let mut power_phase  = false;
-//     let mut target_angle = if((*now_angle - goal_angle) > PI/4.0) {
-//         power_phase  = toggle_bool(power_phase);
-//         (PI - (*now_angle - goal_angle))
-//     }else {
-//         (*now_angle - goal_angle)
-//     };
-
-//     target_angle *= STEERING_GEAR_RATIO as f64;
-//     // if((*now_angle + target_angle as f64) > PI) {
-//     //     target_angle = PI - target_angle;
-//     // } else if((*now_angle + target_angle as f64) < -PI) {
-//     //     target_angle = PI + target_angle;
-//     // }
-//     let steering_speed = (target_angle * 20.0)as u16;
-//     *now_angle = target_angle;
-//     (power_phase, steering_speed, target_angle as i32)
-// }
-
-// fn toggle_bool(mut target_bool:bool) -> bool{
-//     if(target_bool){
-//         target_bool = false;
-//     } else {
-//         target_bool = true;
-//     }
-//     return target_bool
-// }
-
-fn send_pwm(_adress: u8, _semi_id: u8, _phase: bool, _power: u16, _publisher:  &Publisher<drobo_interfaces::msg::BlMdLibMsg>){
+fn send_pwm(_phase0: bool, _power0: u16, _phase1: bool, _power1: u16, _diff_publisher:  &Publisher<DiffDrive>){
     //dmotor_rosでsendPwmをするようにパブリッシュ
-    let mut msg =  drobo_interfaces::msg::BlMdLibMsg::new().unwrap();
-    msg.controller_id = _adress;
-    msg.mode = Mode::CURRENT as u8;
-    msg.current = if _phase {_power as i16} else {-1 *_power as i16};
-    msg.current = if msg.controller_id == 1 {msg.current} else {-1 * msg.current};
+    let mut diff_msg =  DiffDrive::new().unwrap();
+    diff_msg.left = if _phase0 {_power0 as i16} else {-1 *_power0 as i16};
+    diff_msg.right = if _phase1 {-1 * _power1 as i16} else {_power1 as i16};
 
     let logger = Logger::new("differential_two_wheel_control");
-    pr_info!(logger, "{:?}", msg);
-    _publisher.send(&msg).unwrap()
-
-}
-
-
-fn send_speed(_adress: u8, _semi_id: u8, _phase: bool, _speed: u16, _angle: i32, _publisher:  &Publisher<drobo_interfaces::msg::MdLibMsg>){
-    //dmotor_rosでsendSpeedをするようにパブリッシュ
-    let mut msg =  drobo_interfaces::msg::MdLibMsg::new().unwrap();
-    msg.address = _adress as u8;
-    msg.semi_id = _semi_id as u8;
-    msg.mode = Mode::SPEED as u8;
-    msg.phase = _phase as bool;
-    msg.power = _speed as u16;
-    msg.angle = _angle as i32;
-
-    _publisher.send(&msg).unwrap()
-
-}
-
-fn send_angle(_adress: u8, _semi_id: u8, _speed: u16, _angle: i32, _timeout: u16, _publisher:  &Publisher<drobo_interfaces::msg::MdLibMsg>){
-    //dmotor_rosでsendSpeedをするようにパブリッシュ
-    let mut msg =  drobo_interfaces::msg::MdLibMsg::new().unwrap();
-    msg.address = _adress as u8;
-    msg.semi_id = _semi_id as u8;
-    msg.mode = Mode::ANGLE as u8;
-    msg.power = _speed as u16;
-    msg.angle = _angle as i32;
-    msg.timeout = _timeout as u16;
-
-    _publisher.send(&msg).unwrap()
-
+    pr_info!(logger, "{:?} {:?}", diff_msg.left, diff_msg.right);
+    let _ =_diff_publisher.send(&diff_msg);
 }

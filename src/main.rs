@@ -92,7 +92,7 @@ fn move_chassis(_xrpm: f64, _yrpm: f64, _yaw: f64) -> (WheelOrder, WheelOrder) {
 
     let left_order = WheelOrder{
         phase : (left_speed < 0) as bool,
-        speed : (abs(left_speed)  as f32 *3.5* 1.05) as u16
+        speed : (abs(left_speed)  as f32 *3.5* 1.0) as u16
     };
 
     let right_order = WheelOrder{
